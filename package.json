@@ -1,0 +1,35 @@
+{
+  "name": "@hexlet/code",
+  "version": "1.0.0",
+  "description": "This educational project for downloading web pages",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krinteron/backend-project-lvl3.git"
+  },
+  "author": "Krinteron",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/krinteron/backend-project-lvl3/issues"
+  },
+  "homepage": "https://github.com/krinteron/backend-project-lvl3#readme",
+  "bin": {
+    "pageLoader": "bin/page-loader.js"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "cheerio": "^1.0.0-rc.10",
+    "commander": "^7.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.29.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.23.4",
+    "jest": "^27.0.4",
+    "nock": "^13.1.0"
+  }
+}
