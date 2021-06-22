@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs';
+import { readFile } from 'fs/promises';
 import * as path from 'path';
 import os from 'os';
 import pageLoad from '../src/index.js';
-import { readFile } from 'fs/promises';
 
-//const fileName = 'ottisk-com-delivery-payment.html';
 let filePath;
 beforeEach(async () => {
   filePath = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));

@@ -11,11 +11,10 @@ const getFilePath = (url, dir) => {
 export default (url, dir) => {
   const filePath = getFilePath(url, dir);
   return axios.get(url)
-    .then((response) => {
-      return fs.writeFile(filePath, response.data, 'utf-8');
-    }, (error) => console.log(error.response.status))
+    .then((response) => fs.writeFile(filePath, response.data, 'utf-8'),
+      (error) => console.log(error.response.status))
     .then(() => {
       console.log(filePath);
       return filePath;
-    })
+    });
 };
