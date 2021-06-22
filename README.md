@@ -26,3 +26,4 @@ npm link
 
 ### PageLoader:
 
+[![asciicast](https://asciinema.org/a/boB0yK7sYW1PRHlvZMQydURoX.svg)](https://asciinema.org/a/boB0yK7sYW1PRHlvZMQydURoX)

@@ -12,13 +12,10 @@ export default (url, dir) => {
   const filePath = getFilePath(url, dir);
   return axios.get(url)
     .then((response) => {
-
-      // console.log(filePath);
-
       return fs.writeFile(filePath, response.data, 'utf-8');
-
     }, (error) => console.log(error.response.status))
     .then(() => {
+      console.log(filePath);
       return filePath;
     })
 };
