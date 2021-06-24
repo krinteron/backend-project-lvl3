@@ -5,9 +5,6 @@ import * as fs from 'fs';
 import ora from 'ora';
 
 const getFilePath = (url, dir = '', end = '') => {
-  if (dir && !fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
   const renameUrl = `${url.hostname.replace(/[^a-zA-Z0-9]/g, '-')}${url.pathname.replace(/[^a-zA-Z0-9.]/g, '-')}`
     .replace(/(\W$)/, '');
   return path.join(dir, `${renameUrl}${end}`);
@@ -30,31 +27,38 @@ const saveFile = async (listFile) => {
   )));
 };
 
-export default (url, dir) => {
+export default (site, dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
   const exts = ['.png', '.jpg'];
-  const urlName = new URL(url);
-  const sitePath = getFilePath(urlName, dir, '.html');
-  const filesPath = getFilePath(urlName, '', '_files');
+  const urlSite = new URL(site);
+  const htmlPath = getFilePath(urlSite, dir, '.html');
+  const folderSrc = getFilePath(urlSite, '', '_files');
+  const filesPath = getFilePath(urlSite, dir, '_files');
+  if (!fs.existsSync(filesPath)) {
+    fs.mkdirSync(filesPath);
+  }
   const listFile = {};
-  return axios.get(url)
+  return axios.get(site)
     .then((response) => response.data)
     .then((response) => {
       const data = cheerio.load(response);
       data('img').each((i, link) => {
         const { src } = link.attribs;
         if (!exts.includes(path.extname(src))) return link;
-        const imageUrl = src.startsWith('http') ? new URL(src) : new URL(src, urlName.origin);
-        const imagePath = getFilePath(imageUrl, filesPath);
-        listFile[imagePath] = imageUrl.href;
-        link.attribs.src = imagePath;
+        const fileUrl = src.startsWith('http') ? new URL(src) : new URL(src, urlSite.origin);
+        const fileSrc = getFilePath(fileUrl, folderSrc);
+        const filePath = getFilePath(fileUrl, filesPath);
+        listFile[filePath] = fileUrl.href;
+        link.attribs.src = fileSrc;
         return (i, link);
       });
       saveFile(listFile);
       return data.html();
     })
     .then((response) => {
-      fs.promises.writeFile(sitePath, response, 'utf-8');
-      console.log(sitePath);
-      return sitePath;
+      fs.promises.writeFile(htmlPath, response, 'utf-8');
+      return htmlPath;
     });
 };
