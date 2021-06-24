@@ -11,6 +11,7 @@ parserOptions:
 rules: {
   'import/extensions': ['error', 'always', {
     js: 'always',
-  }]
+  }],
+  'no-param-reassign': ['error', { 'props': false }]
 }
   
