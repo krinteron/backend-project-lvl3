@@ -2,63 +2,99 @@ import axios from 'axios';
 import path from 'path';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
-import ora from 'ora';
+import Listr from 'listr';
 
-const getFilePath = (url, dir = '', end = '') => {
-  const renameUrl = `${url.hostname.replace(/[^a-zA-Z0-9]/g, '-')}${url.pathname.replace(/[^a-zA-Z0-9.]/g, '-')}`
-    .replace(/(\W$)/, '');
-  return path.join(dir, `${renameUrl}${end}`);
+const rename = (source) => {
+  const { pathname, host } = new URL(source);
+  const fileName = `${host}${pathname}`
+    .split(/[^\w+]/gi)
+    .filter((el) => el)
+    .join('-');
+  return fileName;
 };
 
-const saveFile = async (listFile) => {
-  await Promise.all(Object.keys(listFile).map((pathFile) => (
-    axios({
-      method: 'get',
-      url: listFile[pathFile],
-      responseType: 'stream',
-    })
-      .then((response) => {
-        response.data.pipe(fs.createWriteStream(pathFile));
-        const spinner = ora('').start();
-        spinner.text = listFile[pathFile];
-        return spinner;
-      })
-      .then((spinner) => spinner.succeed())
-  )));
+const getFilePath = (url, folder = '', end = '') => {
+  const { dir, name, ext } = path.parse(url);
+  const fileName = rename(`${dir}/${name}`);
+  return path.join(folder, `${fileName}${ext}${end}`);
+};
+
+const getWebData = (rawHtml, url, folderSrc) => {
+  const exts = ['.png', '.jpg', '.js', '.css'];
+  const links = [];
+  const data = cheerio.load(rawHtml, {
+    normalizeWhitespace: true,
+    decodeEntities: false,
+  });
+  const mapping = {
+    link: 'href',
+    img: 'src',
+    script: 'src',
+  };
+
+  Object.entries(mapping)
+    .forEach(([tagName, attribName]) => {
+      const elements = data(tagName).toArray();
+      elements
+        .map(({ attribs }, index) => ({ link: attribs[attribName], index }))
+        // remove empty links
+        .filter(({ link }) => link)
+        // make absolute path
+        .map(({ link, index }) => {
+          const { host, href } = new URL(link, url.origin);
+          return { host, href, index };
+        })
+        // checking domain and file extensions
+        .filter(({ host, href }) => host === url.host && exts.includes(path.extname(href)))
+        // make changes to html
+        .forEach(({ href, index }) => {
+          const fileSrc = getFilePath(href, folderSrc);
+          links.push(href);
+          data(elements[index]).attr(attribName, fileSrc);
+        });
+    });
+  return { html: data.html(), links };
 };
 
 export default (site, dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
-  const exts = ['.png', '.jpg'];
   const urlSite = new URL(site);
-  const htmlPath = getFilePath(urlSite, dir, '.html');
-  const folderSrc = getFilePath(urlSite, '', '_files');
-  const filesPath = getFilePath(urlSite, dir, '_files');
+  const htmlPath = getFilePath(site, dir, '.html');
+  const folderSrc = getFilePath(site, '', '_files');
+  const filesPath = getFilePath(site, dir, '_files');
   if (!fs.existsSync(filesPath)) {
     fs.mkdirSync(filesPath);
   }
-  const listFile = {};
   return axios.get(site)
     .then((response) => response.data)
+    .then((response) => getWebData(response, urlSite, folderSrc))
     .then((response) => {
-      const data = cheerio.load(response);
-      data('img').each((i, link) => {
-        const { src } = link.attribs;
-        if (!exts.includes(path.extname(src))) return link;
-        const fileUrl = src.startsWith('http') ? new URL(src) : new URL(src, urlSite.origin);
-        const fileSrc = getFilePath(fileUrl, folderSrc);
-        const filePath = getFilePath(fileUrl, filesPath);
-        listFile[filePath] = fileUrl.href;
-        link.attribs.src = fileSrc;
-        return (i, link);
-      });
-      saveFile(listFile);
-      return data.html();
+      const { html, links } = response;
+      fs.promises.writeFile(htmlPath, html, 'utf-8');
+      return links;
     })
-    .then((response) => {
-      fs.promises.writeFile(htmlPath, response, 'utf-8');
+    .then((links) => {
+      const tasks = links.map((link) => ({
+        title: link,
+        task: async () => {
+          const filePath = getFilePath(link, filesPath);
+          axios({
+            method: 'get',
+            url: link,
+            responseType: 'arraybuffer',
+          })
+            .then(({ data }) => {
+              fs.promises.writeFile(filePath, data);
+            });
+        },
+      }));
+      const listr = new Listr(tasks, { concurrent: true });
+      return listr.run();
+    })
+    .then(() => {
+      console.log(`\nPage was downloaded as '${htmlPath}'`);
       return htmlPath;
     });
 };

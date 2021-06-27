@@ -11,5 +11,5 @@ program
   .helpOption('-h, --help', 'display help for command')
   .arguments('<url>')
   .option('-o, --output  [dir]', 'output dir (default: "/home/user/current-dir")')
-  .action((url) => pageLoad(url, program.opts().output))
+  .action(async (url) => pageLoad(url, program.opts().output))
   .parse(process.argv);
