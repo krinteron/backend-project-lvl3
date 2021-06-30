@@ -86,7 +86,7 @@ export default (site, dir) => {
       return getWebData(response, urlSite, folderSrc);
     })
     .then((response) => {
-      fs.mkdirSync(filesPath, { recursive: false });
+      fs.mkdirSync(filesPath);
       const { html, links } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
