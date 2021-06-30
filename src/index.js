@@ -73,16 +73,11 @@ const getWebData = (rawHtml, url, folderSrc) => {
 };
 
 export default (site, dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
   const urlSite = new URL(site);
   const htmlPath = getFilePath(site, dir, '.html');
   const folderSrc = getFilePath(site, '', '_files');
   const filesPath = getFilePath(site, dir, '_files');
-  if (!fs.existsSync(filesPath)) {
-    fs.mkdirSync(filesPath);
-  }
+
   logger(`parse and modify html: ${site}`);
   return axios.get(site)
     .then((response) => response.data)
@@ -91,6 +86,7 @@ export default (site, dir) => {
       return getWebData(response, urlSite, folderSrc);
     })
     .then((response) => {
+      fs.mkdirSync(filesPath, { recursive: true });
       const { html, links } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
@@ -119,5 +115,8 @@ export default (site, dir) => {
     .then(() => {
       logger(`task completed: ${htmlPath}`);
       return htmlPath;
+    })
+    .catch((err) => {
+      throw err;
     });
 };

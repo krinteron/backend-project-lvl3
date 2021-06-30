@@ -31,3 +31,7 @@ npm link
 ### PageLoader with debug:
 
 [![asciicast](https://asciinema.org/a/WHUdHAR9aJudw3cSADzNwSwhC.svg)](https://asciinema.org/a/WHUdHAR9aJudw3cSADzNwSwhC)
+
+### PageLoader with access denied error:
+
+[![asciicast](https://asciinema.org/a/UpBEXRazBlnPhhy16ke87NXVu.svg)](https://asciinema.org/a/UpBEXRazBlnPhhy16ke87NXVu)

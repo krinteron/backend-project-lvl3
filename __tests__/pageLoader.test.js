@@ -8,7 +8,9 @@ import nock from 'nock';
 import pageLoad from '../src/index.js';
 
 const link = 'https://www.chipdip.ru';
+const fakeLink = 'https://www.chipdip.ru/product/tyco-215876-1';
 let filePath;
+const rootPath = '/root/test';
 
 beforeAll(async () => {
   const html = await readFile('./__tests__/__fixtures__/raw_www-chipdip-ru.html', 'utf-8');
@@ -41,4 +43,15 @@ test('files have been downloaded', async () => {
   expect(await dirIsEmpty(filePath)).toBe(true);
   await pageLoad(link, filePath);
   expect(await dirIsEmpty(filePath)).toBe(false);
+});
+
+test('test with response 404', async () => {
+  nock(link)
+    .get('/product/tyco-215876-1')
+    .reply(404, 'domain matched');
+  await expect(pageLoad(fakeLink, filePath)).rejects.toThrow(/404/);
+});
+
+test('access denied test', async () => {
+  await expect(pageLoad(link, rootPath)).rejects.toThrow('EACCES');
 });
