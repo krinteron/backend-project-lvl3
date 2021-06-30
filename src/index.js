@@ -3,6 +3,22 @@ import path from 'path';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import Listr from 'listr';
+import debug from 'debug';
+import axiosDebug from 'axios-debug-log';
+
+const logger = debug('page-loader:');
+
+axiosDebug({
+  request(debugAxios, config) {
+    debugAxios(`Request with ${config.headers.common.Accept} on ${config.url}`);
+  },
+  response(debugAxios, response) {
+    debugAxios(
+      `Response with ${response.headers['content-type']}`,
+      `from ${response.config.url}`,
+    );
+  },
+});
 
 const rename = (source) => {
   const { pathname, host } = new URL(source);
@@ -15,8 +31,8 @@ const rename = (source) => {
 
 const getFilePath = (url, folder = '', end = '') => {
   const { dir, name, ext } = path.parse(url);
-  const fileName = rename(`${dir}/${name}`);
-  return path.join(folder, `${fileName}${ext}${end}`);
+  const fileName = rename(`${dir}/${name}${end ? ext : ''}`);
+  return path.join(folder, `${fileName}${end || ext}`);
 };
 
 const getWebData = (rawHtml, url, folderSrc) => {
@@ -67,15 +83,21 @@ export default (site, dir) => {
   if (!fs.existsSync(filesPath)) {
     fs.mkdirSync(filesPath);
   }
+  logger(`parse and modify html: ${site}`);
   return axios.get(site)
     .then((response) => response.data)
-    .then((response) => getWebData(response, urlSite, folderSrc))
+    .then((response) => {
+      logger(`parse and modify html: ${site}`);
+      return getWebData(response, urlSite, folderSrc);
+    })
     .then((response) => {
       const { html, links } = response;
+      logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
       return links;
     })
     .then((links) => {
+      logger('preparing tasks for downloading media files');
       const tasks = links.map((link) => ({
         title: link,
         task: async () => {
@@ -87,14 +109,15 @@ export default (site, dir) => {
           })
             .then(({ data }) => {
               fs.promises.writeFile(filePath, data);
-            });
+            })
+            .then(() => logger(`file has been downloaded: ${filePath}`));
         },
       }));
       const listr = new Listr(tasks, { concurrent: true });
       return listr.run();
     })
     .then(() => {
-      console.log(`\nPage was downloaded as '${htmlPath}'`);
+      logger(`task completed: ${htmlPath}`);
       return htmlPath;
     });
 };

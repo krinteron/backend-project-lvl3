@@ -11,5 +11,14 @@ program
   .helpOption('-h, --help', 'display help for command')
   .arguments('<url>')
   .option('-o, --output  [dir]', 'output dir (default: "/home/user/current-dir")')
-  .action(async (url) => pageLoad(url, program.opts().output))
+  .action((url) => {
+    pageLoad(url, program.opts().output)
+      .then((fileName) => {
+        console.log(`\nPage was downloaded as '${fileName}'`);
+      })
+      .catch((err) => {
+        console.error(err.message);
+        process.exit(1);
+      });
+  })
   .parse(process.argv);
