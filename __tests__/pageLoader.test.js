@@ -11,6 +11,7 @@ const link = 'https://www.chipdip.ru';
 const fakeLink = 'https://www.chipdip.ru/product/tyco-215876-1';
 let filePath;
 const rootPath = '/root/test';
+const fakePath = path.join(os.tmpdir(), 'notExistsPath');
 
 beforeAll(async () => {
   const html = await readFile('./__tests__/__fixtures__/raw_www-chipdip-ru.html', 'utf-8');
@@ -54,4 +55,8 @@ test('test with response 404', async () => {
 
 test('access denied test', async () => {
   await expect(pageLoad(link, rootPath)).rejects.toThrow('EACCES');
+});
+
+test('file system errors', async () => {
+  await expect(pageLoad(link, fakePath)).rejects.toThrow('ENOENT');
 });
