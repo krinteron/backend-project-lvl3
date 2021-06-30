@@ -36,7 +36,6 @@ const getFilePath = (url, folder = '', end = '') => {
 };
 
 const getWebData = (rawHtml, url, folderSrc) => {
-  const exts = ['.png', '.jpg', '.js', '.css'];
   const links = [];
   const data = cheerio.load(rawHtml, {
     normalizeWhitespace: true,
@@ -60,8 +59,8 @@ const getWebData = (rawHtml, url, folderSrc) => {
           const { host, href } = new URL(link, url.origin);
           return { host, href, index };
         })
-        // checking domain and file extensions
-        .filter(({ host, href }) => host === url.host && exts.includes(path.extname(href)))
+        // checking domain
+        .filter(({ host }) => host === url.host)
         // make changes to html
         .forEach(({ href, index }) => {
           const fileSrc = getFilePath(href, folderSrc);
