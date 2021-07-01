@@ -36,7 +36,7 @@ const getFilePath = (url, folder = '', end = '') => {
 };
 
 const getWebData = (rawHtml, url, folderSrc) => {
-  const links = [];
+  const resources = [];
   const data = cheerio.load(rawHtml, {
     normalizeWhitespace: true,
     decodeEntities: false,
@@ -64,14 +64,14 @@ const getWebData = (rawHtml, url, folderSrc) => {
         // make changes to html
         .forEach(({ href, index }) => {
           const fileSrc = getFilePath(href, folderSrc);
-          links.push({
+          resources.push({
             fileName: fileSrc,
             link: href,
           });
           data(elements[index]).attr(attribName, fileSrc);
         });
     });
-  return { html: data.html(), links };
+  return { html: data.html(), resources };
 };
 
 export default (site, dir = process.cwd()) => {
@@ -91,14 +91,14 @@ export default (site, dir = process.cwd()) => {
       if (!fs.existsSync(filesPath)) {
         fs.mkdirSync(filesPath);
       }
-      const { html, links } = response;
+      const { html, resources } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
-      return links;
+      return resources;
     })
-    .then((links) => {
+    .then((resources) => {
       logger('preparing tasks for downloading media files');
-      const tasks = links.map(({ fileName, link }) => ({
+      const tasks = resources.map(({ fileName, link }) => ({
         title: link,
         task: async () => {
           const filePath = path.join(dir, fileName);
