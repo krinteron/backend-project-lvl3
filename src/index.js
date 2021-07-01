@@ -32,7 +32,7 @@ const rename = (source) => {
 const getFilePath = (url, folder = '', end = '') => {
   const { dir, name, ext } = path.parse(url);
   const fileName = rename(`${dir}/${name}${end ? ext : ''}`);
-  return path.join(folder, `${fileName}${end || (ext || '.html')}`);
+  return path.join(folder, `${fileName}${end || ext || '.html'}`);
 };
 
 const getWebData = (rawHtml, url, folderSrc) => {
@@ -85,7 +85,9 @@ export default (site, dir) => {
       return getWebData(response, urlSite, folderSrc);
     })
     .then((response) => {
-      fs.mkdirSync(filesPath);
+      if (!fs.existsSync(filesPath)) {
+        fs.mkdirSync(filesPath);
+      };
       const { html, links } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
