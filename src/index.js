@@ -98,7 +98,7 @@ export default (site, dir = process.cwd()) => {
     })
     .then((resources) => {
       logger('preparing tasks for downloading media files');
-      await resources.forEach(({ filename, link }) => (
+      resources.forEach(({ filename, link }) => (
         new Listr([{
           title: `Downloading ${link}`,
           task: () => axios({
