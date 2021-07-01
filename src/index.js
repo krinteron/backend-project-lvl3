@@ -32,7 +32,7 @@ const rename = (source) => {
 const getFilePath = (url, folder = '', end = '') => {
   const { dir, name, ext } = path.parse(url);
   const fileName = rename(`${dir}/${name}${end ? ext : ''}`);
-  return path.join(folder, `${fileName}${end || ext}`);
+  return path.join(folder, `${fileName}${end || (ext || '.html')}`);
 };
 
 const getWebData = (rawHtml, url, folderSrc) => {
