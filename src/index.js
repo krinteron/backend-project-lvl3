@@ -74,19 +74,19 @@ const getWebData = (rawHtml, url, folderSrc) => {
   return { html: data.html(), resources };
 };
 
-const downloadRes = (resources, dir) => {
-  return resources.forEach(({ filename, link }) => {
+const downloadRes = (resources, dir) => (
+  resources.forEach(async ({ filename, link }) => {
+    const data = await axios({
+      method: 'get',
+      url: link,
+      responseType: 'arraybuffer',
+    });
     new Listr([{
       title: `Downloading ${link}`,
-      task: () => axios({
-        method: 'get',
-        url: link,
-        responseType: 'arraybuffer',
-      })
-        .then((data) => fs.promises.writeFile(path.join(dir, filename), data.data)),
-    }], { concurrent: true, exitOnError: false }).run();
-  });
-}
+      task: () => fs.writeFileSync(path.join(dir, filename), data.data, 'utf-8'),
+    }], { concurrent: true }).run();
+  })
+);
 
 export default (site, dir = process.cwd()) => {
   const urlSite = new URL(site);
@@ -129,11 +129,10 @@ export default (site, dir = process.cwd()) => {
       // }));
       // const listr = new Listr(tasks, { concurrent: true });
       // listr.run();
-      return downloadRes(resources, dir);
+      downloadRes(resources, dir);
     })
     .then(() => {
       logger(`task completed: ${htmlPath}`);
-      console.log(fs.readdirSync(filesPath))
       return htmlPath;
     })
     .catch((err) => {
