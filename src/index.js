@@ -74,20 +74,6 @@ const getWebData = (rawHtml, url, folderSrc) => {
   return { html: data.html(), resources };
 };
 
-const downloadRes = (resources, dir) => (
-  resources.forEach(async ({ filename, link }) => {
-    const data = await axios({
-      method: 'get',
-      url: link,
-      responseType: 'arraybuffer',
-    });
-    new Listr([{
-      title: `Downloading ${link}`,
-      task: () => fs.writeFileSync(path.join(dir, filename), data.data, 'utf-8'),
-    }], { concurrent: true }).run();
-  })
-);
-
 export default (site, dir = process.cwd()) => {
   const urlSite = new URL(site);
   const htmlPath = getFilePath(site, dir, '.html');
@@ -102,9 +88,7 @@ export default (site, dir = process.cwd()) => {
       return getWebData(response, urlSite, folderSrc);
     })
     .then((response) => {
-      if (!fs.existsSync(filesPath)) {
-        fs.mkdirSync(filesPath);
-      }
+      fs.mkdirSync(filesPath);
       const { html, resources } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
@@ -112,24 +96,23 @@ export default (site, dir = process.cwd()) => {
     })
     .then((resources) => {
       logger('preparing tasks for downloading media files');
-      // const tasks = resources.map(({ filename, link }) => ({
-      //   title: link,
-      //   task: async () => {
-      //     const filePath = path.join(dir, filename);
-      //     axios({
-      //       method: 'get',
-      //       url: link,
-      //       responseType: 'arraybuffer',
-      //     })
-      //       .then(({ data }) => {
-      //         fs.promises.writeFile(filePath, data);
-      //       })
-      //       .then(() => logger(`file has been downloaded: ${filePath}`));
-      //   },
-      // }));
-      // const listr = new Listr(tasks, { concurrent: true });
-      // listr.run();
-      downloadRes(resources, dir);
+      const tasks = resources.map(({ filename, link }) => ({
+        title: link,
+        task: async () => {
+          const filePath = path.join(dir, filename);
+          axios({
+            method: 'get',
+            url: link,
+            responseType: 'arraybuffer',
+          })
+            .then(({ data }) => {
+              fs.promises.writeFile(filePath, data);
+            })
+            .then(() => logger(`file has been downloaded: ${filePath}`));
+        },
+      }));
+      const listr = new Listr(tasks, { concurrent: true });
+      return listr.run();
     })
     .then(() => {
       logger(`task completed: ${htmlPath}`);
