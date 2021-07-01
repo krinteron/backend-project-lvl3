@@ -12,7 +12,7 @@ program
   .arguments('<url>')
   .option('-o, --output  [dir]', 'output dir (default: "/home/user/current-dir")')
   .action((url) => {
-    pageLoad(url, program.opts().output = process.cwd())
+    pageLoad(url, program.opts().output)
       .then((fileName) => {
         console.log(`\nPage was downloaded as '${fileName}'`);
       })

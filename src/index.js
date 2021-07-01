@@ -71,7 +71,7 @@ const getWebData = (rawHtml, url, folderSrc) => {
   return { html: data.html(), links };
 };
 
-export default (site, dir) => {
+export default (site, dir = process.cwd()) => {
   const urlSite = new URL(site);
   const htmlPath = getFilePath(site, dir, '.html');
   const folderSrc = getFilePath(site, '', '_files');
@@ -87,7 +87,7 @@ export default (site, dir) => {
     .then((response) => {
       if (!fs.existsSync(filesPath)) {
         fs.mkdirSync(filesPath);
-      };
+      }
       const { html, links } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
