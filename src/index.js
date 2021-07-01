@@ -64,7 +64,10 @@ const getWebData = (rawHtml, url, folderSrc) => {
         // make changes to html
         .forEach(({ href, index }) => {
           const fileSrc = getFilePath(href, folderSrc);
-          links.push(href);
+          links.push({
+            fileName: fileSrc,
+            link: href,
+          });
           data(elements[index]).attr(attribName, fileSrc);
         });
     });
@@ -95,10 +98,10 @@ export default (site, dir = process.cwd()) => {
     })
     .then((links) => {
       logger('preparing tasks for downloading media files');
-      const tasks = links.map((link) => ({
+      const tasks = links.map(({ fileName, link }) => ({
         title: link,
         task: async () => {
-          const filePath = getFilePath(link, filesPath);
+          const filePath = path.join(dir, fileName);
           axios({
             method: 'get',
             url: link,
