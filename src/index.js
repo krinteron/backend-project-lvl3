@@ -74,6 +74,20 @@ const getWebData = (rawHtml, url, folderSrc) => {
   return { html: data.html(), resources };
 };
 
+const downloadRes = (resources, dir) => {
+  return resources.forEach(({ filename, link }) => {
+    new Listr([{
+      title: `Downloading ${link}`,
+      task: () => axios({
+        method: 'get',
+        url: link,
+        responseType: 'arraybuffer',
+      })
+        .then((data) => fs.promises.writeFile(path.join(dir, filename), data.data)),
+    }], { concurrent: true, exitOnError: false }).run();
+  });
+}
+
 export default (site, dir = process.cwd()) => {
   const urlSite = new URL(site);
   const htmlPath = getFilePath(site, dir, '.html');
@@ -98,33 +112,24 @@ export default (site, dir = process.cwd()) => {
     })
     .then((resources) => {
       logger('preparing tasks for downloading media files');
-      resources.forEach(({ filename, link }) => (
-        new Listr([{
-          title: `Downloading ${link}`,
-          task: () => axios({
-            method: 'get',
-            url: link,
-            responseType: 'arraybuffer',
-          })
-            .then((data) => fs.promises.writeFile(path.join(dir, filename), data.data)),
-        }], { concurrent: true, exitOnError: false }).run()
-        // title: link,
-        // task: async () => {
-        //   const filePath = path.join(dir, filename);
-        //   axios({
-        //     method: 'get',
-        //     url: link,
-        //     responseType: 'arraybuffer',
-        //   })
-        //     .then(({ data }) => {
-        //       fs.promises.writeFile(filePath, data);
-        //     })
-        //     .then(() => logger(`file has been downloaded: ${filePath}`));
-        // },
-      ));
+      // const tasks = resources.map(({ filename, link }) => ({
+      //   title: link,
+      //   task: async () => {
+      //     const filePath = path.join(dir, filename);
+      //     axios({
+      //       method: 'get',
+      //       url: link,
+      //       responseType: 'arraybuffer',
+      //     })
+      //       .then(({ data }) => {
+      //         fs.promises.writeFile(filePath, data);
+      //       })
+      //       .then(() => logger(`file has been downloaded: ${filePath}`));
+      //   },
+      // }));
       // const listr = new Listr(tasks, { concurrent: true });
       // listr.run();
-      // return;
+      return downloadRes(resources, dir);
     })
     .then(() => {
       logger(`task completed: ${htmlPath}`);
