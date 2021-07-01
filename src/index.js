@@ -102,7 +102,6 @@ export default (site, dir = process.cwd()) => {
         title: link,
         task: async () => {
           const filePath = path.join(dir, filename);
-          console.log(filename)
           axios({
             method: 'get',
             url: link,
@@ -115,7 +114,8 @@ export default (site, dir = process.cwd()) => {
         },
       }));
       const listr = new Listr(tasks, { concurrent: true });
-      return listr.run();
+      listr.run();
+      return;
     })
     .then(() => {
       logger(`task completed: ${htmlPath}`);
