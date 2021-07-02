@@ -89,7 +89,6 @@ export default (site, dir = process.cwd()) => {
     })
     .then((response) => {
       fs.mkdirSync(filesPath);
-      fs.writeFileSync(path.join(filesPath, 'test.js'), 'blablah', 'utf-8');
       const { html, resources } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
@@ -101,7 +100,7 @@ export default (site, dir = process.cwd()) => {
         title: link,
         task: async () => {
           const filePath = path.join(dir, filename);
-          axios({
+          await axios({
             method: 'get',
             url: link,
             responseType: 'arraybuffer',
