@@ -79,6 +79,8 @@ export default (site, dir = process.cwd()) => {
   const htmlPath = getFilePath(site, dir, '.html');
   const folderSrc = getFilePath(site, '', '_files');
   const filesPath = getFilePath(site, dir, '_files');
+  fs.mkdirSync(filesPath);
+  fs.writeFileSync(path.join(filesPath, 'test.js'), 'blablah', 'utf-8');
 
   logger(`parse and modify html: ${site}`);
   return axios.get(site)
@@ -88,7 +90,7 @@ export default (site, dir = process.cwd()) => {
       return getWebData(response, urlSite, folderSrc);
     })
     .then((response) => {
-      fs.mkdirSync(filesPath);
+      // fs.mkdirSync(filesPath);
       const { html, resources } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
