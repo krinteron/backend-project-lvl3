@@ -81,14 +81,14 @@ export default (site, dir = process.cwd()) => {
   const filesPath = getFilePath(site, dir, '_files');
 
   logger(`parse and modify html: ${site}`);
-  return axios.get(site)
+  return fs.promises.mkdir(filesPath)
+    .then(() => axios.get(site))
     .then((response) => response.data)
     .then((response) => {
       logger(`parse and modify html: ${site}`);
       return getWebData(response, urlSite, folderSrc);
     })
     .then((response) => {
-      fs.mkdirSync(filesPath);
       const { html, resources } = response;
       logger(`saving the finished html: ${htmlPath}`);
       fs.promises.writeFile(htmlPath, html, 'utf-8');
@@ -96,23 +96,30 @@ export default (site, dir = process.cwd()) => {
     })
     .then((resources) => {
       logger('preparing tasks for downloading media files');
-      const tasks = resources.map(({ filename, link }) => ({
-        title: link,
-        task: async () => {
-          const filePath = path.join(dir, filename);
-          await axios({
-            method: 'get',
-            url: link,
-            responseType: 'arraybuffer',
-          })
-            .then(({ data }) => {
-              fs.promises.writeFile(filePath, data);
-            })
-            .then(() => logger(`file has been downloaded: ${filePath}`));
-        },
-      }));
-      const listr = new Listr(tasks, { concurrent: true });
-      return listr.run();
+      const promises = resources.map(({ filename, link }) => {
+        const filePath = path.join(dir, filename);
+        return new Promise((resolve, reject) => {
+          new Listr([{
+            title: link,
+            task: () => (
+              axios({
+                method: 'get',
+                url: link,
+                responseType: 'arraybuffer',
+              })
+                .then(({ data }) => {
+                  fs.promises.writeFile(filePath, data);
+                })
+                .catch((error) => {
+                  reject(error);
+                })
+            ),
+          }], { concurrent: true }).run()
+            .then(() => resolve());
+        });
+      });
+
+      return Promise.all(promises);
     })
     .then(() => {
       logger(`task completed: ${htmlPath}`);
