@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/krinteron/backend-project-lvl3#readme",
   "bin": {
-    "pageLoader": "bin/page-loader.js"
+    "page-loader": "bin/page-loader.js"
   },
   "jest": {
     "testEnvironment": "node",
