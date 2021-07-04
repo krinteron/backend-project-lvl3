@@ -45,7 +45,7 @@ test('files have been downloaded', async () => {
   expect(await dirIsEmpty(filePath)).toBe(false);
 });
 
-test('test with response 404', async () => {
+test('test response 404', async () => {
   nock(link)
     .get('/product/tyco-215876-1')
     .reply(404, 'domain matched');
