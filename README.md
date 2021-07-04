@@ -1,4 +1,4 @@
-# hexlet frontend-project-lvl3
+# hexlet backend-project-lvl3
 
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/krinteron/backend-project-lvl3/workflows/hexlet-check/badge.svg)](https://github.com/krinteron/backend-project-lvl3/actions)
